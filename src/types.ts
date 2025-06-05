@@ -13,3 +13,8 @@ export interface TodoStore {
     addTodo: (title: string) => void;
     removeTodo: (id: number) => void;
 }
+
+export interface TodoRowProps {
+    todo: Todo;
+    onDelete: (id: number) => void;
+}

@@ -9,16 +9,18 @@ export const useTodoStore = create<TodoStore>((set) => ({
     fetchTodos: async () => {
         set({ loading: true, error: null });
         try {
-            const [todos, _posts] = await Promise.all([
+            const [todos, posts] = await Promise.all([
                 fetch('https://jsonplaceholder.typicode.com/todos', {
                     headers: { Authorization: 'Bearer example-token' },
                 }).then((res) => res.json()),
                 fetch('https://jsonplaceholder.typicode.com/posts', {
                     headers: { Authorization: 'Bearer example-token' },
-                }),
+                }).then((res) => res.json()),
             ]);
+            console.log('Fetched posts: ', posts);
             set({ todos: todos.slice(0, 10), loading: false });
-        } catch (error: any) {
+        } catch (error: unknown) {
+            console.log('error: ', error);
             set({ error: 'Failed to fetch todos', loading: false });
         }
     },
