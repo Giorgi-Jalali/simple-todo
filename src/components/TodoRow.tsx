@@ -1,4 +1,3 @@
-// src/components/TodoRow.tsx
 import React from 'react';
 import type {TodoRowProps} from '../types';
 import { FaTrash } from 'react-icons/fa';

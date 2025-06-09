@@ -1,4 +1,3 @@
-// src/components/TodoTable.tsx
 import React from 'react';
 import { useTodoStore } from '../store/todoStore';
 import TodoRow from './TodoRow';
