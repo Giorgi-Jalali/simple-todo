@@ -1,23 +1,17 @@
-import React from 'react';
 import { useTodoStore } from '../store/todoStore';
 import TodoRow from './TodoRow';
-
-const thStyle: React.CSSProperties = {
-    borderBottom: '2px solid #ccc',
-    padding: '8px',
-    textAlign: 'left',
-};
+import {Table, Th} from "../styles.ts";
 
 const TodoTable = () => {
     const { todos, removeTodo } = useTodoStore();
 
     return (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <Table>
             <thead>
             <tr>
-                <th style={thStyle}>Title</th>
-                <th style={thStyle}>Completed</th>
-                <th style={thStyle}>Action</th>
+                <Th>Title</Th>
+                <Th>Completed</Th>
+                <Th>Action</Th>
             </tr>
             </thead>
             <tbody>
@@ -25,7 +19,7 @@ const TodoTable = () => {
                 <TodoRow key={todo.id} todo={todo} onDelete={removeTodo} />
             ))}
             </tbody>
-        </table>
+        </Table>
     );
 };
 
