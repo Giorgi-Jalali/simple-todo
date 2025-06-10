@@ -1,24 +1,32 @@
-import { create } from 'zustand';
-import type { Todo, TodoStore } from '../types.ts';
+import {create} from 'zustand';
+import type {Todo, TodoStore} from '../types.ts';
 
-export const useTodoStore = create<TodoStore>((set) => ({
+const TODOS_PER_PAGE = 20;
+
+export const useTodoStore = create<TodoStore>((set, get) => ({
     todos: [],
     loading: false,
     error: null,
+    currentPage: 1,
+    filter: 'all',
+
+    setFilter: (filter) => set({filter, currentPage: 1}),
+
+    setCurrentPage: (page) => set({currentPage: page}),
 
     fetchTodos: async () => {
-        set({ loading: true, error: null });
+        set({loading: true, error: null});
 
         try {
             const endpoints = [
-                { key: 'todos', url: 'https://jsonplaceholder.typicode.com/todos' },
-                { key: 'posts', url: 'https://jsonplaceholder.typicode.com/posts' },
+                {key: 'todos', url: 'https://jsonplaceholder.typicode.com/todos'},
+                {key: 'posts', url: 'https://jsonplaceholder.typicode.com/posts'},
             ];
 
             const responses = await Promise.all(
                 endpoints.map((endpoint) =>
                     fetch(endpoint.url, {
-                        headers: { Authorization: 'Bearer example-token' },
+                        headers: {Authorization: 'Bearer example-token'},
                     })
                 )
             );
@@ -31,11 +39,11 @@ export const useTodoStore = create<TodoStore>((set) => ({
             });
 
             console.log('Fetched posts: ', result.posts);
-            set({ todos: result.todos.slice(0, 8), loading: false });
+            set({todos: result.todos, loading: false, currentPage: 1});
 
         } catch (error: unknown) {
             console.log('error: ', error);
-            set({ error: 'Failed to fetch todos', loading: false });
+            set({error: 'Failed to fetch todos', loading: false});
         }
     },
 
@@ -46,11 +54,35 @@ export const useTodoStore = create<TodoStore>((set) => ({
                 title,
                 completed: false,
             };
-            return { todos: [newTodo, ...state.todos] };
+            return {todos: [newTodo, ...state.todos]};
         }),
 
     removeTodo: (id) =>
         set((state) => ({
             todos: state.todos.filter((todo) => todo.id !== id),
         })),
+
+    getFilteredTodos: () => {
+        const {todos, filter} = get();
+        if (filter === 'completed') {
+            return todos.filter((t) => t.completed);
+        }
+        if (filter === 'incompleted') {
+            return todos.filter((t) => !t.completed);
+        }
+        return todos;
+    },
+
+    getVisibleTodos: () => {
+        const {currentPage} = get();
+        const filtered = get().getFilteredTodos();
+        const start = (currentPage - 1) * TODOS_PER_PAGE;
+        return filtered.slice(start, start + TODOS_PER_PAGE);
+    },
+
+    getTotalPages: () => {
+        const filtered = get().getFilteredTodos();
+        return Math.ceil(filtered.length / TODOS_PER_PAGE);
+    },
+
 }));

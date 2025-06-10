@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { useTodoStore } from '../store/todoStore';
+import {useState} from 'react';
+import {useTodoStore} from '../store/todoStore';
+import {Button, InputContainer} from "../styles.ts";
 
 export const TodoInput = () => {
     const [text, setText] = useState('');
@@ -13,13 +14,13 @@ export const TodoInput = () => {
     };
 
     return (
-        <div>
+        <InputContainer>
             <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Add new todo"
             />
-            <button onClick={handleAdd}>Add</button>
-        </div>
+            <Button onClick={handleAdd} disabled={text.length < 1}>Add</Button>
+        </InputContainer>
     );
 };

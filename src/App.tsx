@@ -5,6 +5,7 @@ import { TodoInput } from './components/TodoInput';
 import TodoTable from './components/TodoTable.tsx';
 
 import {Container, Error, Loading, Title} from "./styles.ts";
+import TodoFilter from './components/TodoFilter.tsx';
 
 function App() {
     const { fetchTodos, loading, error } = useTodoStore();
@@ -17,6 +18,7 @@ function App() {
         <Container>
             <Title>Todo App</Title>
             <TodoInput />
+            <TodoFilter />
             {loading && <Loading>Loading</Loading>}
             {error && <Error>{error}</Error>}
             {!loading && <TodoTable />}
