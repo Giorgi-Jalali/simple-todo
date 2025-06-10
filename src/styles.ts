@@ -36,6 +36,11 @@ export const Td = styled.td`
 export const TrashIcon = styled(FaTrash)`
     color: red;
     cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        opacity: 0.8;
+    }
 `;
 
 const dots = keyframes`

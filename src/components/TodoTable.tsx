@@ -1,21 +1,21 @@
 import {useTodoStore} from '../store/todoStore';
 import TodoRow from './TodoRow';
-import {Button, InputContainer, Table, Th} from "../styles.ts";
+import {Button, InputContainer, Table, Th} from '../styles.ts';
 
 const TodoTable = () => {
     const {
         todos,
         removeTodo,
-        filter,
         currentPage,
         setCurrentPage,
         getVisibleTodos,
         getTotalPages,
+        getFilteredTodos,
     } = useTodoStore();
 
     const visibleTodos = getVisibleTodos();
-
     const totalPages = getTotalPages();
+    const filteredTodos = getFilteredTodos();
 
     const goPrev = () => {
         if (currentPage > 1) setCurrentPage(currentPage - 1);
@@ -28,19 +28,13 @@ const TodoTable = () => {
     return (
         <>
             <div>
-                <div>Filtered Todos Number: {todos.filter(todo => {
-                    if (filter === 'completed') return todo.completed;
-                    if (filter === 'incompleted') return !todo.completed;
-                    return true;
-                }).length}</div>
-
+                <div>Filtered Todos: {filteredTodos.length}</div>
                 <div>All loaded Todos: {todos.length}</div>
 
                 <InputContainer>
                     <div>
                         Page {currentPage} of {totalPages}
                     </div>
-
                     <Button onClick={goPrev} disabled={currentPage === 1}>
                         Prev
                     </Button>
@@ -59,9 +53,9 @@ const TodoTable = () => {
                 </tr>
                 </thead>
                 <tbody>
-                    {visibleTodos.map((todo) => (
-                        <TodoRow key={todo.id} todo={todo} onDelete={removeTodo}/>
-                    ))}
+                {visibleTodos.map((todo) => (
+                    <TodoRow key={todo.id} todo={todo} onDelete={removeTodo}/>
+                ))}
                 </tbody>
             </Table>
         </>

@@ -1,7 +1,8 @@
 import {create} from 'zustand';
 import type {Todo, TodoStore} from '../types.ts';
-
-const TODOS_PER_PAGE = 20;
+import {TODOS_PER_PAGE} from '../constants.ts';
+import {filterFunctions} from "../utils/filterFunctions.ts";
+import {API_ENDPOINTS, AUTH_HEADER} from "../config/api.ts";
 
 export const useTodoStore = create<TodoStore>((set, get) => ({
     todos: [],
@@ -18,34 +19,33 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
         set({loading: true, error: null});
 
         try {
-            const endpoints = [
-                {key: 'todos', url: 'https://jsonplaceholder.typicode.com/todos'},
-                {key: 'posts', url: 'https://jsonplaceholder.typicode.com/posts'},
-            ];
+            const endpointEntries = Object.entries(API_ENDPOINTS);
 
             const responses = await Promise.all(
-                endpoints.map((endpoint) =>
-                    fetch(endpoint.url, {
-                        headers: {Authorization: 'Bearer example-token'},
+                endpointEntries.map(([, url]) =>
+                    fetch(url, {
+                        headers: AUTH_HEADER,
                     })
                 )
             );
 
-            const jsonData = await Promise.all(responses.map((res) => res.json()));
+            const data = await Promise.all(responses.map((res) => res.json()));
 
-            const result: Record<string, Todo[]> = {};
-            endpoints.forEach((endpoint, index) => {
-                result[endpoint.key] = jsonData[index];
+            const [todos, posts] = data;
+
+            console.log('Fetched posts:', posts);
+
+            set({
+                todos,
+                loading: false,
+                currentPage: 1,
             });
-
-            console.log('Fetched posts: ', result.posts);
-            set({todos: result.todos, loading: false, currentPage: 1});
-
-        } catch (error: unknown) {
-            console.log('error: ', error);
+        } catch (error) {
+            console.error('Error:', error);
             set({error: 'Failed to fetch todos', loading: false});
         }
     },
+
 
     addTodo: (title) =>
         set((state) => {
@@ -64,13 +64,8 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
 
     getFilteredTodos: () => {
         const {todos, filter} = get();
-        if (filter === 'completed') {
-            return todos.filter((t) => t.completed);
-        }
-        if (filter === 'incompleted') {
-            return todos.filter((t) => !t.completed);
-        }
-        return todos;
+        const fn = filterFunctions[filter as keyof typeof filterFunctions];
+        return fn ? todos.filter(fn) : todos;
     },
 
     getVisibleTodos: () => {

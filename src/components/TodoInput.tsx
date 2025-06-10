@@ -20,7 +20,7 @@ export const TodoInput = () => {
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Add new todo"
             />
-            <Button onClick={handleAdd} disabled={text.length < 1}>Add</Button>
+            <Button onClick={handleAdd} disabled={!text.trim()}>Add</Button>
         </InputContainer>
     );
 };
