@@ -29,6 +29,7 @@ const TodoTable = () => {
         <>
             <div>
                 <div>Filtered Todos: {filteredTodos.length}</div>
+                <div>Visible Todos on Page {currentPage}: {visibleTodos.length}</div>
                 <div>All loaded Todos: {todos.length}</div>
 
                 <InputContainer>
