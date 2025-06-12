@@ -3,6 +3,7 @@ import type {Todo, TodoStore} from '../types.ts';
 import {TODOS_PER_PAGE} from '../constants.ts';
 import {filterFunctions} from "../utils/filterFunctions.ts";
 import {API_ENDPOINTS, AUTH_HEADER} from "../config/api.ts";
+import {patchTodo} from "../api/todoApi.ts";
 
 export const useTodoStore = create<TodoStore>((set, get) => ({
     todos: [],
@@ -10,6 +11,8 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
     error: null,
     currentPage: 1,
     filter: 'all',
+    searchTerm: '',
+    setSearchTerm: (term) => set({ searchTerm: term }),
 
     setFilter: (filter) => set({filter, currentPage: 1}),
 
@@ -46,7 +49,6 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
         }
     },
 
-
     addTodo: (title) =>
         set((state) => {
             const newTodo: Todo = {
@@ -63,9 +65,17 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
         })),
 
     getFilteredTodos: () => {
-        const {todos, filter} = get();
+        const { todos, filter, searchTerm } = get();
         const fn = filterFunctions[filter as keyof typeof filterFunctions];
-        return fn ? todos.filter(fn) : todos;
+        let filtered = todos.filter(fn);
+
+        if (searchTerm.trim()) {
+            filtered = filtered.filter(todo =>
+                todo.title.toLowerCase().includes(searchTerm.trim().toLowerCase())
+            );
+        }
+
+        return filtered;
     },
 
     getVisibleTodos: () => {
@@ -78,6 +88,23 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
     getTotalPages: () => {
         const filtered = get().getFilteredTodos();
         return Math.ceil(filtered.length / TODOS_PER_PAGE);
+    },
+
+    updateTodoTitle: async (id: number, newTitle: string) => {
+        const previousTodos = get().todos;
+
+        set((state) => ({
+            todos: state.todos.map((todo) =>
+                todo.id === id ? { ...todo, title: newTitle } : todo
+            ),
+        }));
+
+        try {
+            await patchTodo(id, { title: newTitle });
+        } catch (error) {
+            console.error('Failed to update todo.', error);
+            set({ todos: previousTodos });
+        }
     },
 
 }));

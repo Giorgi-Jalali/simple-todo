@@ -1,8 +1,11 @@
+import {useState} from "react";
 import {useTodoStore} from '../store/todoStore';
 import TodoRow from './TodoRow';
 import {Button, InputContainer, Table, Th} from '../styles.ts';
 
 const TodoTable = () => {
+    // This state is for testing ErrorBoundary
+    const [shouldCrash, setShouldCrash] = useState(false);
     const {
         todos,
         removeTodo,
@@ -16,6 +19,11 @@ const TodoTable = () => {
     const visibleTodos = getVisibleTodos();
     const totalPages = getTotalPages();
     const filteredTodos = getFilteredTodos();
+
+    // For Testing ErrorBoundary
+    if (shouldCrash) {
+        throw new Error("Simulated render error for ErrorBoundary test");
+    }
 
     const goPrev = () => {
         if (currentPage > 1) setCurrentPage(currentPage - 1);
@@ -31,6 +39,10 @@ const TodoTable = () => {
                 <div>Filtered Todos: {filteredTodos.length}</div>
                 <div>Visible Todos on Page {currentPage}: {visibleTodos.length}</div>
                 <div>All loaded Todos: {todos.length}</div>
+                <Button onClick={() => setShouldCrash(true)}>
+                    Test ErrorBoundary
+                </Button>
+
 
                 <InputContainer>
                     <div>
