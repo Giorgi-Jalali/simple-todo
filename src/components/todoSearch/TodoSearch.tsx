@@ -1,36 +1,17 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useTodoStore } from '../../store/todoStore.ts';
-import { TodoSearchContainer } from "./styles.ts";
-import debounce from 'lodash.debounce';
+import React, { useState, useEffect } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useAppDispatch } from '../../store/hooks';
+import { setSearchTerm } from '../../store/todos/todosSlice';
+import { TodoSearchContainer } from './styles';
 
-const TodoSearch = () => {
-    const setSearchTerm = useTodoStore(state => state.setSearchTerm);
+const TodoSearch: React.FC = () => {
+    const dispatch = useAppDispatch();
     const [localValue, setLocalValue] = useState('');
-
-    const debouncedSetSearchTerm = useMemo(() =>
-            debounce(setSearchTerm, 400)
-        , [setSearchTerm]);
+    const debouncedValue = useDebounce(localValue, 300);
 
     useEffect(() => {
-        debouncedSetSearchTerm(localValue);
-    }, [localValue, debouncedSetSearchTerm]);
-
-    useEffect(() => {
-        return () => {
-            debouncedSetSearchTerm.cancel();
-        };
-    }, [debouncedSetSearchTerm]);
-
-    // Using setTimeout
-    /*
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setSearchTerm(localValue);
-        }, 400);
-
-        return () => clearTimeout(timer);
-    }, [localValue, setSearchTerm]);
-    */
+        dispatch(setSearchTerm(debouncedValue));
+    }, [debouncedValue, dispatch]);
 
     return (
         <TodoSearchContainer>
@@ -38,7 +19,7 @@ const TodoSearch = () => {
                 type="text"
                 placeholder="Search todos by title..."
                 value={localValue}
-                onChange={(e) => setLocalValue(e.target.value)}
+                onChange={e => setLocalValue(e.target.value)}
             />
         </TodoSearchContainer>
     );

@@ -1,16 +1,17 @@
 import {useState} from 'react';
-import {useTodoStore} from '../store/todoStore';
-import {Button, InputContainer} from "../styles.ts";
+import {Button, InputContainer} from '../styles';
+import {useAppDispatch} from '../store/hooks';
+import {addTodo} from '../store/todos/todosSlice';
 
 export const TodoInput = () => {
     const [text, setText] = useState('');
-    const addTodo = useTodoStore((s) => s.addTodo);
+    const dispatch = useAppDispatch();
 
     const handleAdd = () => {
-        if (text.trim()) {
-            addTodo(text.trim());
-            setText('');
-        }
+        const trimmed = text.trim();
+        if (!trimmed) return;
+        dispatch(addTodo(trimmed));
+        setText('');
     };
 
     return (
@@ -20,7 +21,9 @@ export const TodoInput = () => {
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Add new todo"
             />
-            <Button onClick={handleAdd} disabled={!text.trim()}>Add</Button>
+            <Button onClick={handleAdd} disabled={!text.trim()}>
+                Add
+            </Button>
         </InputContainer>
     );
 };

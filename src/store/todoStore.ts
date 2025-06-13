@@ -1,110 +1,119 @@
 import {create} from 'zustand';
-import type {Todo, TodoStore} from '../types.ts';
+import type {ThemeType, Todo, TodoStore} from '../types.ts';
 import {TODOS_PER_PAGE} from '../constants.ts';
 import {filterFunctions} from "../utils/filterFunctions.ts";
 import {API_ENDPOINTS, AUTH_HEADER} from "../config/api.ts";
 import {patchTodo} from "../api/todoApi.ts";
 
-export const useTodoStore = create<TodoStore>((set, get) => ({
-    todos: [],
-    loading: false,
-    error: null,
-    currentPage: 1,
-    filter: 'all',
-    searchTerm: '',
-    setSearchTerm: (term) => set({ searchTerm: term }),
+export const useTodoStore = create<TodoStore>((set, get) => {
+    const storedTheme = localStorage.getItem('theme') as ThemeType | null;
 
-    setFilter: (filter) => set({filter, currentPage: 1}),
+    return {
+        todos: [],
+        loading: false,
+        error: null,
+        currentPage: 1,
+        filter: 'all',
+        searchTerm: '',
+        setSearchTerm: (term) => set({searchTerm: term}),
 
-    setCurrentPage: (page) => set({currentPage: page}),
+        setFilter: (filter) => set({filter, currentPage: 1}),
 
-    fetchTodos: async () => {
-        set({loading: true, error: null});
+        setCurrentPage: (page) => set({currentPage: page}),
 
-        try {
-            const endpointEntries = Object.entries(API_ENDPOINTS);
+        theme: storedTheme || 'dark',
+        setTheme: (theme) => {
+            set({theme});
+            localStorage.setItem('theme', theme);
+        },
 
-            const responses = await Promise.all(
-                endpointEntries.map(([, url]) =>
-                    fetch(url, {
-                        headers: AUTH_HEADER,
-                    })
-                )
-            );
+        fetchTodos: async () => {
+            set({loading: true, error: null});
 
-            const data = await Promise.all(responses.map((res) => res.json()));
+            try {
+                const endpointEntries = Object.entries(API_ENDPOINTS);
 
-            const [todos, posts] = data;
+                const responses = await Promise.all(
+                    endpointEntries.map(([, url]) =>
+                        fetch(url, {
+                            headers: AUTH_HEADER,
+                        })
+                    )
+                );
 
-            console.log('Fetched posts:', posts);
+                const data = await Promise.all(responses.map((res) => res.json()));
 
-            set({
-                todos,
-                loading: false,
-                currentPage: 1,
-            });
-        } catch (error) {
-            console.error('Error:', error);
-            set({error: 'Failed to fetch todos', loading: false});
-        }
-    },
+                const [todos, posts] = data;
 
-    addTodo: (title) =>
-        set((state) => {
-            const newTodo: Todo = {
-                id: Date.now(),
-                title,
-                completed: false,
-            };
-            return {todos: [newTodo, ...state.todos]};
-        }),
+                console.log('Fetched posts:', posts);
 
-    removeTodo: (id) =>
-        set((state) => ({
-            todos: state.todos.filter((todo) => todo.id !== id),
-        })),
+                set({
+                    todos,
+                    loading: false,
+                    currentPage: 1,
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                set({error: 'Failed to fetch todos', loading: false});
+            }
+        },
 
-    getFilteredTodos: () => {
-        const { todos, filter, searchTerm } = get();
-        const fn = filterFunctions[filter as keyof typeof filterFunctions];
-        let filtered = todos.filter(fn);
+        addTodo: (title) =>
+            set((state) => {
+                const newTodo: Todo = {
+                    id: Date.now(),
+                    title,
+                    completed: false,
+                };
+                return {todos: [newTodo, ...state.todos]};
+            }),
 
-        if (searchTerm.trim()) {
-            filtered = filtered.filter(todo =>
-                todo.title.toLowerCase().includes(searchTerm.trim().toLowerCase())
-            );
-        }
+        removeTodo: (id) =>
+            set((state) => ({
+                todos: state.todos.filter((todo) => todo.id !== id),
+            })),
 
-        return filtered;
-    },
+        getFilteredTodos: () => {
+            const {todos, filter, searchTerm} = get();
+            const fn = filterFunctions[filter as keyof typeof filterFunctions];
+            let filtered = todos.filter(fn);
 
-    getVisibleTodos: () => {
-        const {currentPage} = get();
-        const filtered = get().getFilteredTodos();
-        const start = (currentPage - 1) * TODOS_PER_PAGE;
-        return filtered.slice(start, start + TODOS_PER_PAGE);
-    },
+            if (searchTerm.trim()) {
+                filtered = filtered.filter(todo =>
+                    todo.title.toLowerCase().includes(searchTerm.trim().toLowerCase())
+                );
+            }
 
-    getTotalPages: () => {
-        const filtered = get().getFilteredTodos();
-        return Math.ceil(filtered.length / TODOS_PER_PAGE);
-    },
+            return filtered;
+        },
 
-    updateTodoTitle: async (id: number, newTitle: string) => {
-        const previousTodos = get().todos;
+        getVisibleTodos: () => {
+            const {currentPage} = get();
+            const filtered = get().getFilteredTodos();
+            const start = (currentPage - 1) * TODOS_PER_PAGE;
+            return filtered.slice(start, start + TODOS_PER_PAGE);
+        },
 
-        set((state) => ({
-            todos: state.todos.map((todo) =>
-                todo.id === id ? { ...todo, title: newTitle } : todo
-            ),
-        }));
+        getTotalPages: () => {
+            const filtered = get().getFilteredTodos();
+            return Math.ceil(filtered.length / TODOS_PER_PAGE);
+        },
 
-        try {
-            await patchTodo(id, { title: newTitle });
-        } catch (error) {
-            console.error('Failed to update todo.', error);
-            set({ todos: previousTodos });
-        }
-    },
+        updateTodoTitle: async (id: number, newTitle: string) => {
+            const previousTodos = get().todos;
 
-}));
+            set((state) => ({
+                todos: state.todos.map((todo) =>
+                    todo.id === id ? {...todo, title: newTitle} : todo
+                ),
+            }));
+
+            try {
+                await patchTodo(id, {title: newTitle});
+            } catch (error) {
+                console.error('Failed to update todo.', error);
+                set({todos: previousTodos});
+            }
+        },
+
+    }});

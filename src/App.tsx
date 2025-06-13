@@ -1,35 +1,54 @@
 /** @jsxImportSource @emotion/react */
-import {useEffect} from 'react';
-import {useTodoStore} from './store/todoStore';
-import {TodoInput} from './components/TodoInput';
-import TodoTable from './components/TodoTable.tsx';
-import {Container, Error, Loading, Title} from "./styles.ts";
-import TodoFilter from './components/TodoFilter.tsx';
-import ErrorBoundary from "./components/errorBoundary/ErrorBoundary.tsx";
-import TodoSearch from "./components/todoSearch/TodoSearch.tsx";
+import { useEffect } from 'react';
+import { ThemeProvider } from '@emotion/react';
+
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import { fetchTodos, setTheme } from './store/todos/todosSlice';
+import { lightTheme, darkTheme } from './styles/theme';
+
+import { GlobalStyles } from './styles/global';
+import { Button, Container, Error, Loading, Title } from './styles';
+
+import { TodoInput } from './components/TodoInput';
+import TodoFilter    from './components/TodoFilter';
+import TodoSearch    from './components/todoSearch/TodoSearch';
+import TodoTable     from './components/TodoTable';
+import ErrorBoundary from './components/errorBoundary/ErrorBoundary';
 
 function App() {
-    const {fetchTodos, loading, error} = useTodoStore();
+    const dispatch = useAppDispatch();
+    const { loading, error, theme } = useAppSelector(s => s.todos);
 
     useEffect(() => {
-        fetchTodos();
-    }, [fetchTodos]);
+        dispatch(fetchTodos());
+    }, [dispatch]);
+
+    const handleThemeToggle = () => {
+        dispatch(setTheme(theme === 'dark' ? 'light' : 'dark'));
+    };
+
+    const activeTheme = theme === 'light' ? lightTheme : darkTheme;
 
     return (
-        <Container>
-            <Title>Todo App</Title>
-            <TodoInput/>
-            <TodoFilter/>
-            <TodoSearch />
-            {loading && <Loading>Loading</Loading>}
-            {error && <Error>{error}</Error>}
-            {!loading && (
-                <ErrorBoundary>
-                    <TodoTable/>
-                </ErrorBoundary>
-            )}
-
-        </Container>
+        <ThemeProvider theme={activeTheme}>
+            <GlobalStyles />
+            <Container>
+                <Title>Todo App</Title>
+                <Button onClick={handleThemeToggle}>
+                    Switch to {theme === 'light' ? 'Dark' : 'Light'} Theme
+                </Button>
+                <TodoInput />
+                {error   && <Error>{error}</Error>}
+                <TodoFilter />
+                <TodoSearch />
+                {loading && <Loading>Loading</Loading>}
+                {!loading && (
+                    <ErrorBoundary>
+                        <TodoTable />
+                    </ErrorBoundary>
+                )}
+            </Container>
+        </ThemeProvider>
     );
 }
 

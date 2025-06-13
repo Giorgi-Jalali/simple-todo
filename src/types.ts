@@ -7,6 +7,8 @@ export interface Todo {
 
 export type TodoFilter = 'all' | 'completed' | 'incompleted';
 
+export type ThemeType = 'light' | 'dark';
+
 export interface TodoStore {
     todos: Todo[];
     loading: boolean;
@@ -30,6 +32,9 @@ export interface TodoStore {
     setSearchTerm: (term: string) => void;
 
     updateTodoTitle: (id: number, newTitle: string) => Promise<void>;
+
+    theme: ThemeType;
+    setTheme: (theme: ThemeType) => void;
 }
 
 export interface TodoRowProps {

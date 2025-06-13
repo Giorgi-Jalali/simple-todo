@@ -1,53 +1,51 @@
-import {useState} from "react";
-import {useTodoStore} from '../store/todoStore';
+import { useState } from 'react';
+import { Button, InputContainer, Table, Th } from '../styles';
 import TodoRow from './TodoRow';
-import {Button, InputContainer, Table, Th} from '../styles.ts';
+import { useAppSelector, useAppDispatch } from '../store/hooks';
+import {
+    getFilteredTodos,
+    getVisibleTodos,
+    getTotalPages
+} from '../store/todos/selectors';
+import { setCurrentPage } from '../store/todos/todosSlice';
 
 const TodoTable = () => {
-    // This state is for testing ErrorBoundary
     const [shouldCrash, setShouldCrash] = useState(false);
-    const {
-        todos,
-        removeTodo,
-        currentPage,
-        setCurrentPage,
-        getVisibleTodos,
-        getTotalPages,
-        getFilteredTodos,
-    } = useTodoStore();
+    const dispatch = useAppDispatch();
 
-    const visibleTodos = getVisibleTodos();
-    const totalPages = getTotalPages();
-    const filteredTodos = getFilteredTodos();
+    const todosCount    = useAppSelector(state => state.todos.todos.length);
+    const filteredCount = useAppSelector(getFilteredTodos).length;
+    const visibleTodos  = useAppSelector(getVisibleTodos);
+    const totalPages    = useAppSelector(getTotalPages);
+    const currentPage   = useAppSelector(state => state.todos.currentPage);
 
-    // For Testing ErrorBoundary
     if (shouldCrash) {
-        throw new Error("Simulated render error for ErrorBoundary test");
+        throw new Error('Simulated render error for ErrorBoundary');
     }
 
     const goPrev = () => {
-        if (currentPage > 1) setCurrentPage(currentPage - 1);
+        if (currentPage > 1) {
+            dispatch(setCurrentPage(currentPage - 1));
+        }
     };
-
     const goNext = () => {
-        if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+        if (currentPage < totalPages) {
+            dispatch(setCurrentPage(currentPage + 1));
+        }
     };
 
     return (
         <>
             <div>
-                <div>Filtered Todos: {filteredTodos.length}</div>
+                <div>Filtered Todos: {filteredCount}</div>
                 <div>Visible Todos on Page {currentPage}: {visibleTodos.length}</div>
-                <div>All loaded Todos: {todos.length}</div>
+                <div>All loaded Todos: {todosCount}</div>
                 <Button onClick={() => setShouldCrash(true)}>
                     Test ErrorBoundary
                 </Button>
 
-
                 <InputContainer>
-                    <div>
-                        Page {currentPage} of {totalPages}
-                    </div>
+                    <div>Page {currentPage} of {totalPages}</div>
                     <Button onClick={goPrev} disabled={currentPage === 1}>
                         Prev
                     </Button>
@@ -66,8 +64,8 @@ const TodoTable = () => {
                 </tr>
                 </thead>
                 <tbody>
-                {visibleTodos.map((todo) => (
-                    <TodoRow key={todo.id} todo={todo} onDelete={removeTodo}/>
+                {visibleTodos.map(todo => (
+                    <TodoRow key={todo.id} todo={todo} />
                 ))}
                 </tbody>
             </Table>
