@@ -22,7 +22,7 @@ function TodoRow({todo}: { todo: Todo }) {
             alert('Title must be at least 3 characters');
             setEditValue(todo.title);
         } else if (trimmed !== todo.title) {
-            await dispatch(updateTodoTitle({id: todo.id, newTitle: trimmed})).unwrap();
+            dispatch(updateTodoTitle({id: todo.id, newTitle: trimmed}));
         }
         setIsEditing(false);
     };

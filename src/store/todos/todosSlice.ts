@@ -1,9 +1,6 @@
-import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { Todo, ThemeType } from '../../types';
-import { API_ENDPOINTS, AUTH_HEADER } from '../../config/api';
-import { patchTodo } from '../../api/todoApi';
-import type { RootState } from '../store';
-import type { TodosState } from './types';
+import type {TodosState, UpdateTodoTitlePayload} from './types';
 
 const initialState: TodosState = {
     todos: [],
@@ -15,43 +12,7 @@ const initialState: TodosState = {
     theme: (localStorage.getItem('theme') as ThemeType) ?? 'dark',
 };
 
-export const fetchTodos = createAsyncThunk<Todo[], void, { rejectValue: string }>(
-    'todos/fetchTodos',
-    async (_, { rejectWithValue }) => {
-        try {
-            const entries = Object.entries(API_ENDPOINTS);
-            const responses = await Promise.all(
-                entries.map(([, url]) => fetch(url, { headers: AUTH_HEADER }))
-            );
-            const data = await Promise.all(responses.map(r => r.json()));
-            return data[0] as Todo[];
-        } catch {
-            return rejectWithValue('Failed to fetch todos');
-        }
-    }
-);
-
-export const updateTodoTitle = createAsyncThunk<
-    { id: number; newTitle: string },
-    { id: number; newTitle: string },
-    { state: RootState; rejectValue: string }
->(
-    'todos/updateTodoTitle',
-    async ({ id, newTitle }, { rejectWithValue }) => {
-        const trimmed = newTitle.trim();
-        if (trimmed.length < 3) {
-            return rejectWithValue('Title must be at least 3 characters');
-        }
-        try {
-            await patchTodo(id, { title: trimmed });
-            return { id, newTitle: trimmed };
-        } catch {
-            return rejectWithValue('Failed to update todo');
-        }
-    }
-);
-
-const slice = createSlice({
+const todosSlice = createSlice({
     name: 'todos',
     initialState,
     reducers: {
@@ -81,32 +42,34 @@ const slice = createSlice({
             state.theme = action.payload;
             localStorage.setItem('theme', action.payload);
         },
-    },
-    extraReducers: builder => {
-        builder
-            .addCase(fetchTodos.pending, state => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchTodos.fulfilled, (state, { payload }) => {
-                state.loading = false;
-                state.todos = payload;
-                state.currentPage = 1;
-            })
-            .addCase(fetchTodos.rejected, (state, { payload }) => {
-                state.loading = false;
-                state.error = payload ?? null;
-            })
-            .addCase(updateTodoTitle.pending, state => {
-                state.error = null;
-            })
-            .addCase(updateTodoTitle.fulfilled, (state, { payload }) => {
-                const t = state.todos.find(todo => todo.id === payload.id);
-                if (t) t.title = payload.newTitle;
-            })
-            .addCase(updateTodoTitle.rejected, (state, { payload }) => {
-                state.error = payload ?? 'Title must be at least 3 characters';
-            });
+
+        fetchTodos() {},
+        updateTodoTitle: (state, _action: PayloadAction<UpdateTodoTitlePayload>) => {console.log("state: ", state)},
+
+
+        fetchTodosPending(state) {
+            state.loading = true;
+            state.error = null;
+        },
+        fetchTodosFulfilled(state, action: PayloadAction<Todo[]>) {
+            state.loading = false;
+            state.todos = action.payload;
+            state.currentPage = 1;
+        },
+        fetchTodosRejected(state, action: PayloadAction<string>) {
+            state.loading = false;
+            state.error = action.payload;
+        },
+        updateTodoTitlePending(state) {
+            state.error = null;
+        },
+        updateTodoTitleFulfilled(state, action: PayloadAction<UpdateTodoTitlePayload>) {
+            const t = state.todos.find(todo => todo.id === action.payload.id);
+            if (t) t.title = action.payload.newTitle;
+        },
+        updateTodoTitleRejected(state, action: PayloadAction<string>) {
+            state.error = action.payload ?? 'Title must be at least 3 characters';
+        },
     },
 });
 
@@ -117,6 +80,14 @@ export const {
     addTodo,
     removeTodo,
     setTheme,
-} = slice.actions;
+    fetchTodos,
+    fetchTodosPending,
+    fetchTodosFulfilled,
+    fetchTodosRejected,
+    updateTodoTitle,
+    updateTodoTitlePending,
+    updateTodoTitleFulfilled,
+    updateTodoTitleRejected,
+} = todosSlice.actions;
 
-export default slice.reducer;
+export default todosSlice.reducer;

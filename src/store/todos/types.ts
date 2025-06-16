@@ -9,3 +9,8 @@ export interface TodosState {
     currentPage: number;
     theme: ThemeType;
 }
+
+export type UpdateTodoTitlePayload = {
+    id: number;
+    newTitle: string;
+};
